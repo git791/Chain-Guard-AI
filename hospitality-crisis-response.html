@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HorizonGuard — Hospitality Crisis Response System</title>
+<style>
+  :root {
+    --primary: #1a56db;
+    --primary-dark: #1e429f;
+    --danger: #e02424;
+    --danger-light: #fde8e8;
+    --warning: #c27803;
+    --warning-light: #fdf6b2;
+    --success: #057a55;
+    --success-light: #def7ec;
+    --info: #1c64f2;
+    --info-light: #e1effe;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-400: #9ca3af;
+    --gray-500: #6b7280;
+    --gray-600: #4b5563;
+    --gray-700: #374151;
+    --gray-800: #1f2937;
+    --gray-900: #111827;
+    --sidebar-w: 260px;
+    --header-h: 60px;
+    --radius: 10px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: var(--gray-50); color: var(--gray-800); font-size: 14px; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+
+  /* HEADER */
+  .header { height: var(--header-h); background: #0f1b2d; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; flex-shrink: 0; border-bottom: 1px solid #1e3a5f; }
+  .header-logo { display: flex; align-items: center; gap: 10px; }
+  .logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, #1a56db, #06b6d4); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+  .logo-icon svg { width: 18px; height: 18px; fill: white; }
+  .logo-text { color: white; font-size: 16px; font-weight: 700; letter-spacing: -0.3px; }
+  .logo-badge { background: #ef4444; color: white; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px; margin-left: 4px; }
+  .header-center { display: flex; align-items: center; gap: 8px; }
+  .status-pill { display: flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .status-pill.normal { background: rgba(5,122,85,0.2); color: #6ee7b7; border: 1px solid rgba(5,122,85,0.3); }
+  .status-pill.alert { background: rgba(224,36,36,0.2); color: #fca5a5; border: 1px solid rgba(224,36,36,0.3); animation: pulse-ring 1.5s infinite; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+  .status-dot.blink { animation: blink 1s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  @keyframes pulse-ring { 0%,100%{box-shadow:0 0 0 0 rgba(224,36,36,0.4)} 50%{box-shadow:0 0 0 6px rgba(224,36,36,0)} }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .hdr-time { color: #94a3b8; font-size: 12px; font-weight: 500; }
+  .hdr-btn { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); color: #94a3b8; padding: 6px 10px; border-radius: 7px; cursor: pointer; font-size: 12px; transition: all 0.2s; display: flex; align-items: center; gap: 5px; }
+  .hdr-btn:hover { background: rgba(255,255,255,0.14); color: white; }
+  .notif-badge { background: #ef4444; color: white; border-radius: 10px; padding: 1px 5px; font-size: 10px; font-weight: 700; }
+
+  /* LAYOUT */
+  .app-body { display: flex; flex: 1; overflow: hidden; }
+
+  /* SIDEBAR */
+  .sidebar { width: var(--sidebar-w); background: #0f1b2d; display: flex; flex-direction: column; flex-shrink: 0; border-right: 1px solid #1e3a5f; overflow-y: auto; }
+  .sidebar-section { padding: 16px 12px 8px; }
+  .sidebar-label { color: #475569; font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; padding: 0 4px; margin-bottom: 6px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; cursor: pointer; transition: all 0.15s; color: #94a3b8; font-size: 13px; font-weight: 500; position: relative; }
+  .nav-item:hover { background: rgba(255,255,255,0.06); color: #e2e8f0; }
+  .nav-item.active { background: rgba(26,86,219,0.2); color: #93c5fd; border: 1px solid rgba(26,86,219,0.25); }
+  .nav-icon { width: 20px; height: 20px; flex-shrink: 0; opacity: 0.8; }
+  .nav-badge { margin-left: auto; background: #ef4444; color: white; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 10px; }
+  .nav-badge.amber { background: #d97706; }
+  .sidebar-divider { height: 1px; background: #1e3a5f; margin: 8px 12px; }
+
+  /* ZONE STATUS */
+  .zone-list { padding: 8px 12px; }
+  .zone-item { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: 7px; margin-bottom: 4px; cursor: pointer; transition: background 0.15s; }
+  .zone-item:hover { background: rgba(255,255,255,0.05); }
+  .zone-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .zone-dot.green { background: #10b981; }
+  .zone-dot.red { background: #ef4444; animation: blink 1s infinite; }
+  .zone-dot.amber { background: #f59e0b; }
+  .zone-name { color: #94a3b8; font-size: 12px; flex: 1; }
+  .zone-tag { font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 4px; }
+  .zone-tag.clear { background: rgba(16,185,129,0.15); color: #6ee7b7; }
+  .zone-tag.crisis { background: rgba(239,68,68,0.15); color: #fca5a5; }
+  .zone-tag.watch { background: rgba(245,158,11,0.15); color: #fcd34d; }
+
+  /* MAIN CONTENT */
+  .main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+
+  /* ALERT BANNER */
+  .alert-banner { background: linear-gradient(90deg, #7f1d1d, #991b1b); border-bottom: 2px solid #ef4444; padding: 12px 20px; display: flex; align-items: center; gap: 12px; flex-shrink: 0; animation: slideDown 0.3s ease; }
+  @keyframes slideDown { from{transform:translateY(-100%)} to{transform:translateY(0)} }
+  .alert-icon { width: 36px; height: 36px; background: rgba(239,68,68,0.25); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .alert-content { flex: 1; }
+  .alert-title { color: #fecaca; font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .alert-title .sev { background: #ef4444; color: white; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 4px; }
+  .alert-sub { color: #fca5a5; font-size: 12px; margin-top: 2px; }
+  .alert-actions { display: flex; gap: 8px; }
+  .alert-btn { padding: 6px 14px; border-radius: 7px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; }
+  .alert-btn.primary { background: #ef4444; color: white; }
+  .alert-btn.primary:hover { background: #dc2626; }
+  .alert-btn.ghost { background: rgba(255,255,255,0.1); color: #fca5a5; border: 1px solid rgba(255,255,255,0.15); }
+  .alert-btn.ghost:hover { background: rgba(255,255,255,0.18); }
+
+  /* DASHBOARD AREA */
+  .dashboard { padding: 20px; display: grid; grid-template-columns: 1fr 1fr 1fr 340px; grid-template-rows: auto auto 1fr; gap: 16px; min-height: 0; }
+
+  /* METRIC CARDS */
+  .metric-card { background: white; border-radius: var(--radius); border: 1px solid var(--gray-200); padding: 16px; box-shadow: var(--shadow); }
+  .metric-label { font-size: 11px; font-weight: 600; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .metric-value { font-size: 28px; font-weight: 700; line-height: 1; margin-bottom: 4px; }
+  .metric-sub { font-size: 12px; color: var(--gray-500); display: flex; align-items: center; gap: 4px; }
+  .metric-trend { font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 4px; }
+  .metric-trend.up { background: var(--danger-light); color: var(--danger); }
+  .metric-trend.down { background: var(--success-light); color: var(--success); }
+  .metric-trend.neutral { background: var(--gray-100); color: var(--gray-600); }
+  .metric-icon { float: right; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+  .metric-icon.red { background: var(--danger-light); }
+  .metric-icon.amber { background: var(--warning-light); }
+  .metric-icon.blue { background: var(--info-light); }
+  .metric-icon.green { background: var(--success-light); }
+
+  /* INCIDENT MAP */
+  .map-card { grid-column: 1 / 4; background: white; border-radius: var(--radius); border: 1px solid var(--gray-200); overflow: hidden; box-shadow: var(--shadow); }
+  .card-header { padding: 14px 18px; border-bottom: 1px solid var(--gray-100); display: flex; align-items: center; justify-content: space-between; }
+  .card-title { font-size: 13px; font-weight: 700; color: var(--gray-800); display: flex; align-items: center; gap: 8px; }
+  .card-actions { display: flex; gap: 6px; }
+  .chip { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid var(--gray-200); background: var(--gray-50); color: var(--gray-600); transition: all 0.15s; }
+  .chip.active { background: var(--primary); color: white; border-color: var(--primary); }
+  .hotel-map { padding: 16px; position: relative; }
+  .floor-label { font-size: 11px; font-weight: 700; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .floor-grid { display: grid; grid-template-columns: repeat(16, 1fr); gap: 3px; margin-bottom: 12px; }
+  .room { height: 24px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 600; transition: all 0.15s; border: 1px solid transparent; }
+  .room:hover { transform: scale(1.15); z-index: 10; position: relative; }
+  .room.clear { background: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
+  .room.occupied { background: #dcfce7; color: #15803d; border-color: #bbf7d0; }
+  .room.alert { background: #fee2e2; color: #dc2626; border-color: #fca5a5; animation: pulse-bg 1.5s infinite; }
+  .room.staff { background: #fef9c3; color: #a16207; border-color: #fde047; }
+  .room.evacuated { background: #f3f4f6; color: #9ca3af; border-color: #e5e7eb; }
+  @keyframes pulse-bg { 0%,100%{opacity:1} 50%{opacity:0.6} }
+  .map-legend { display: flex; gap: 16px; padding: 0 0 8px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--gray-500); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+
+  /* FEED */
+  .feed-card { grid-column: 4; grid-row: 2 / 4; background: white; border-radius: var(--radius); border: 1px solid var(--gray-200); box-shadow: var(--shadow); display: flex; flex-direction: column; overflow: hidden; }
+  .feed-list { flex: 1; overflow-y: auto; padding: 8px; }
+  .feed-item { padding: 10px 10px; border-radius: 8px; margin-bottom: 6px; border-left: 3px solid transparent; cursor: pointer; transition: background 0.15s; }
+  .feed-item:hover { background: var(--gray-50); }
+  .feed-item.critical { border-left-color: #ef4444; background: #fff5f5; }
+  .feed-item.warning { border-left-color: #f59e0b; background: #fffbeb; }
+  .feed-item.info { border-left-color: #3b82f6; background: #eff6ff; }
+  .feed-item.resolved { border-left-color: #10b981; background: #f0fdf4; opacity: 0.75; }
+  .feed-time { font-size: 10px; color: var(--gray-400); font-weight: 500; }
+  .feed-msg { font-size: 12px; color: var(--gray-700); margin-top: 2px; line-height: 1.4; font-weight: 500; }
+  .feed-meta { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+  .feed-tag { font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 4px; }
+  .feed-tag.red { background: #fee2e2; color: #dc2626; }
+  .feed-tag.amber { background: #fef3c7; color: #d97706; }
+  .feed-tag.blue { background: #dbeafe; color: #1d4ed8; }
+  .feed-tag.green { background: #dcfce7; color: #15803d; }
+
+  /* INCIDENT PANEL */
+  .incident-panel { grid-column: 1 / 4; background: white; border-radius: var(--radius); border: 1px solid var(--gray-200); box-shadow: var(--shadow); overflow: hidden; }
+  .incident-tabs { display: flex; border-bottom: 1px solid var(--gray-100); }
+  .itab { padding: 12px 18px; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--gray-500); border-bottom: 2px solid transparent; transition: all 0.15s; white-space: nowrap; }
+  .itab.active { color: var(--primary); border-bottom-color: var(--primary); }
+  .tab-content { display: none; padding: 16px; }
+  .tab-content.active { display: block; }
+
+  /* RESPONSE TEAM */
+  .team-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+  .team-card { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 8px; padding: 12px; display: flex; align-items: center; gap: 10px; }
+  .avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+  .avatar.security { background: #dbeafe; color: #1d4ed8; }
+  .avatar.medical { background: #dcfce7; color: #15803d; }
+  .avatar.fire { background: #fee2e2; color: #dc2626; }
+  .avatar.manager { background: #f3e8ff; color: #7c3aed; }
+  .team-info { flex: 1; min-width: 0; }
+  .team-name { font-size: 12px; font-weight: 600; color: var(--gray-800); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .team-role { font-size: 11px; color: var(--gray-500); }
+  .team-status { display: flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; margin-top: 3px; }
+  .status-dot-sm { width: 6px; height: 6px; border-radius: 50%; }
+  .on-duty { color: #059669; }
+  .on-duty .status-dot-sm { background: #10b981; }
+  .responding { color: #dc2626; }
+  .responding .status-dot-sm { background: #ef4444; animation: blink 1s infinite; }
+  .off-duty { color: #9ca3af; }
+  .off-duty .status-dot-sm { background: #d1d5db; }
+
+  /* COMMS PANEL */
+  .comms-area { display: grid; grid-template-columns: 220px 1fr; gap: 12px; height: 260px; }
+  .channel-list { border: 1px solid var(--gray-200); border-radius: 8px; overflow-y: auto; }
+  .channel { padding: 10px 12px; cursor: pointer; border-bottom: 1px solid var(--gray-100); transition: background 0.15s; display: flex; align-items: center; gap: 8px; }
+  .channel:hover { background: var(--gray-50); }
+  .channel.active { background: #eff6ff; }
+  .ch-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .ch-name { font-size: 12px; font-weight: 600; color: var(--gray-700); flex: 1; }
+  .ch-unread { background: #ef4444; color: white; font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 10px; }
+  .message-area { display: flex; flex-direction: column; border: 1px solid var(--gray-200); border-radius: 8px; overflow: hidden; }
+  .msg-list { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+  .msg { max-width: 80%; }
+  .msg.inbound { align-self: flex-start; }
+  .msg.outbound { align-self: flex-end; }
+  .msg-bubble { padding: 8px 12px; border-radius: 10px; font-size: 12px; line-height: 1.4; }
+  .msg.inbound .msg-bubble { background: var(--gray-100); color: var(--gray-700); border-bottom-left-radius: 2px; }
+  .msg.outbound .msg-bubble { background: #1d4ed8; color: white; border-bottom-right-radius: 2px; }
+  .msg-meta { font-size: 10px; color: var(--gray-400); margin-top: 3px; }
+  .msg.outbound .msg-meta { text-align: right; }
+  .msg-input-row { display: flex; gap: 6px; padding: 8px; border-top: 1px solid var(--gray-100); background: var(--gray-50); }
+  .msg-input { flex: 1; border: 1px solid var(--gray-200); border-radius: 6px; padding: 6px 10px; font-size: 12px; outline: none; }
+  .msg-input:focus { border-color: var(--primary); }
+  .send-btn { background: var(--primary); color: white; border: none; border-radius: 6px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .send-btn:hover { background: var(--primary-dark); }
+
+  /* PROTOCOL */
+  .protocol-list { display: flex; flex-direction: column; gap: 8px; }
+  .proto-item { display: flex; align-items: flex-start; gap: 10px; padding: 12px; background: var(--gray-50); border-radius: 8px; border: 1px solid var(--gray-200); }
+  .proto-num { width: 24px; height: 24px; border-radius: 50%; background: var(--primary); color: white; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .proto-num.done { background: var(--success); }
+  .proto-num.active-step { background: var(--danger); animation: blink 1s infinite; }
+  .proto-body { flex: 1; }
+  .proto-title { font-size: 13px; font-weight: 600; color: var(--gray-800); }
+  .proto-desc { font-size: 11px; color: var(--gray-500); margin-top: 2px; }
+  .proto-status { margin-left: auto; display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; }
+  .proto-status.done { color: var(--success); }
+  .proto-status.pending { color: var(--warning); }
+  .proto-status.active { color: var(--danger); }
+
+  /* SOS BUTTON */
+  .sos-float { position: fixed; bottom: 24px; right: 24px; z-index: 100; }
+  .sos-btn { width: 60px; height: 60px; border-radius: 50%; background: #dc2626; border: none; color: white; font-size: 13px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 15px rgba(220,38,38,0.5); transition: all 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; letter-spacing: 0.5px; animation: sos-pulse 2s infinite; }
+  .sos-btn:hover { transform: scale(1.1); box-shadow: 0 6px 20px rgba(220,38,38,0.6); }
+  @keyframes sos-pulse { 0%,100%{box-shadow: 0 4px 15px rgba(220,38,38,0.5), 0 0 0 0 rgba(220,38,38,0.4)} 50%{box-shadow: 0 4px 15px rgba(220,38,38,0.5), 0 0 0 12px rgba(220,38,38,0)} }
+
+  /* MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 200; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: white; border-radius: 14px; width: 520px; max-width: 95vw; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.25); animation: popIn 0.25s ease; }
+  @keyframes popIn { from{opacity:0;transform:scale(0.95)} to{opacity:1;transform:scale(1)} }
+  .modal-header { padding: 20px 24px 16px; border-bottom: 1px solid var(--gray-100); display: flex; align-items: center; justify-content: space-between; }
+  .modal-title { font-size: 16px; font-weight: 700; color: var(--gray-900); display: flex; align-items: center; gap: 8px; }
+  .modal-close { background: none; border: none; cursor: pointer; color: var(--gray-400); font-size: 20px; padding: 4px; transition: color 0.15s; }
+  .modal-close:hover { color: var(--gray-700); }
+  .modal-body { padding: 20px 24px; }
+  .modal-footer { padding: 16px 24px; border-top: 1px solid var(--gray-100); display: flex; gap: 8px; justify-content: flex-end; }
+  .btn { padding: 8px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; }
+  .btn.primary { background: var(--primary); color: white; }
+  .btn.primary:hover { background: var(--primary-dark); }
+  .btn.danger { background: #dc2626; color: white; }
+  .btn.danger:hover { background: #b91c1c; }
+  .btn.ghost { background: var(--gray-100); color: var(--gray-700); border: 1px solid var(--gray-200); }
+  .btn.ghost:hover { background: var(--gray-200); }
+  .form-group { margin-bottom: 14px; }
+  .form-label { display: block; font-size: 12px; font-weight: 600; color: var(--gray-700); margin-bottom: 5px; }
+  .form-control { width: 100%; border: 1px solid var(--gray-300); border-radius: 7px; padding: 8px 12px; font-size: 13px; outline: none; transition: border-color 0.15s; font-family: inherit; }
+  .form-control:focus { border-color: var(--primary); }
+  .type-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .type-card { border: 2px solid var(--gray-200); border-radius: 8px; padding: 12px 8px; text-align: center; cursor: pointer; transition: all 0.15s; }
+  .type-card:hover { border-color: var(--primary); background: var(--info-light); }
+  .type-card.selected { border-color: var(--primary); background: var(--info-light); }
+  .type-card.selected.danger { border-color: #dc2626; background: var(--danger-light); }
+  .type-icon { font-size: 22px; margin-bottom: 4px; }
+  .type-name { font-size: 11px; font-weight: 600; color: var(--gray-700); }
+  .severity-row { display: flex; gap: 6px; }
+  .sev-btn { flex: 1; padding: 7px; border-radius: 7px; border: 2px solid var(--gray-200); font-size: 11px; font-weight: 700; cursor: pointer; text-align: center; transition: all 0.15s; background: white; }
+  .sev-btn.low { border-color: #10b981; color: #059669; }
+  .sev-btn.low.sel { background: #dcfce7; }
+  .sev-btn.medium { border-color: #f59e0b; color: #d97706; }
+  .sev-btn.medium.sel { background: #fef3c7; }
+  .sev-btn.high { border-color: #ef4444; color: #dc2626; }
+  .sev-btn.high.sel { background: #fee2e2; }
+  .sev-btn.critical { border-color: #7f1d1d; color: #7f1d1d; }
+  .sev-btn.critical.sel { background: #fee2e2; }
+
+  /* ANALYTICS */
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+  .bar-container { display: flex; flex-direction: column; gap: 6px; }
+  .bar-row { display: flex; align-items: center; gap: 8px; }
+  .bar-label { font-size: 11px; color: var(--gray-600); width: 100px; flex-shrink: 0; text-align: right; }
+  .bar-track { flex: 1; height: 8px; background: var(--gray-100); border-radius: 4px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+  .bar-val { font-size: 11px; font-weight: 600; color: var(--gray-700); width: 28px; }
+
+  /* TIMELINE */
+  .timeline { display: flex; flex-direction: column; gap: 0; }
+  .tl-item { display: flex; gap: 12px; position: relative; padding-bottom: 16px; }
+  .tl-left { display: flex; flex-direction: column; align-items: center; width: 28px; flex-shrink: 0; }
+  .tl-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .tl-line { flex: 1; width: 2px; background: var(--gray-200); margin-top: 4px; }
+  .tl-body { flex: 1; padding-bottom: 4px; }
+  .tl-title { font-size: 12px; font-weight: 600; color: var(--gray-800); }
+  .tl-sub { font-size: 11px; color: var(--gray-500); margin-top: 1px; }
+  .tl-time { font-size: 10px; color: var(--gray-400); margin-top: 3px; }
+
+  /* TOAST */
+  .toast-area { position: fixed; top: 70px; right: 16px; z-index: 300; display: flex; flex-direction: column; gap: 8px; width: 300px; }
+  .toast { background: white; border-radius: 10px; border: 1px solid var(--gray-200); padding: 12px 14px; box-shadow: var(--shadow-md); display: flex; gap: 10px; align-items: flex-start; animation: toastIn 0.3s ease; }
+  @keyframes toastIn { from{opacity:0;transform:translateX(100%)} to{opacity:1;transform:translateX(0)} }
+  .toast.danger { border-left: 3px solid #ef4444; }
+  .toast.success { border-left: 3px solid #10b981; }
+  .toast.info { border-left: 3px solid #3b82f6; }
+  .toast-title { font-size: 12px; font-weight: 700; color: var(--gray-800); }
+  .toast-msg { font-size: 11px; color: var(--gray-500); margin-top: 2px; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--gray-200); border-radius: 10px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--gray-300); }
+
+  /* RESPONSIVE */
+  @media (max-width: 1100px) {
+    .dashboard { grid-template-columns: 1fr 1fr 340px; }
+    .map-card { grid-column: 1/3; }
+    .incident-panel { grid-column: 1/3; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOAST AREA -->
+<div class="toast-area" id="toastArea"></div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24"><path d="M12 2L3 7v10l9 5 9-5V7L12 2zm0 2.18L19 8.5v7L12 19.32 5 15.5v-7L12 4.18z"/><circle cx="12" cy="12" r="2.5"/></svg>
+    </div>
+    <span class="logo-text">HorizonGuard</span>
+    <span class="logo-badge">LIVE</span>
+  </div>
+  <div class="header-center">
+    <div class="status-pill alert" id="globalStatus">
+      <div class="status-dot blink"></div>
+      <span id="statusText">ACTIVE INCIDENT — Floor 8, Room 812</span>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="hdr-time" id="liveTime"></span>
+    <button class="hdr-btn" onclick="openReportModal()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+      New Incident
+    </button>
+    <button class="hdr-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      Alerts <span class="notif-badge">3</span>
+    </button>
+    <button class="hdr-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
+      Admin
+    </button>
+  </div>
+</div>
+
+<!-- BODY -->
+<div class="app-body">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Operations</div>
+      <div class="nav-item active" onclick="setNav(this,'overview')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="#93c5fd" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+        Overview
+      </div>
+      <div class="nav-item" onclick="setNav(this,'incidents')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Active Incidents
+        <span class="nav-badge">2</span>
+      </div>
+      <div class="nav-item" onclick="setNav(this,'dispatch')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+        Dispatch Center
+      </div>
+      <div class="nav-item" onclick="setNav(this,'comms')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Communications
+        <span class="nav-badge amber">5</span>
+      </div>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Monitoring</div>
+      <div class="nav-item" onclick="setNav(this,'sensors')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        Sensor Network
+      </div>
+      <div class="nav-item" onclick="setNav(this,'analytics')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Analytics
+      </div>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Zone Status</div>
+    </div>
+    <div class="zone-list">
+      <div class="zone-item"><div class="zone-dot red"></div><span class="zone-name">Floor 8 — East Wing</span><span class="zone-tag crisis">CRISIS</span></div>
+      <div class="zone-item"><div class="zone-dot amber"></div><span class="zone-name">Lobby — Main Entrance</span><span class="zone-tag watch">WATCH</span></div>
+      <div class="zone-item"><div class="zone-dot green"></div><span class="zone-name">Pool & Spa Area</span><span class="zone-tag clear">CLEAR</span></div>
+      <div class="zone-item"><div class="zone-dot green"></div><span class="zone-name">Restaurant — Level 2</span><span class="zone-tag clear">CLEAR</span></div>
+      <div class="zone-item"><div class="zone-dot green"></div><span class="zone-name">Parking — Basement</span><span class="zone-tag clear">CLEAR</span></div>
+      <div class="zone-item"><div class="zone-dot green"></div><span class="zone-name">Conference Center</span><span class="zone-tag clear">CLEAR</span></div>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section" style="padding-bottom:16px;">
+      <div class="sidebar-label">Integrations</div>
+      <div class="nav-item" style="opacity:0.6; cursor:default">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        PMS Bridge
+        <span style="margin-left:auto;font-size:9px;background:rgba(16,185,129,0.2);color:#6ee7b7;padding:2px 5px;border-radius:3px;font-weight:700;">LIVE</span>
+      </div>
+      <div class="nav-item" style="opacity:0.6; cursor:default">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2H4.18A2 2 0 0 1 2 19.92V16.92M16 3l4 4-4 4M8 3l-4 4 4 4"/></svg>
+        911 Gateway
+        <span style="margin-left:auto;font-size:9px;background:rgba(16,185,129,0.2);color:#6ee7b7;padding:2px 5px;border-radius:3px;font-weight:700;">LIVE</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN DASHBOARD -->
+  <div class="main" id="mainContent">
+    <!-- ALERT BANNER -->
+    <div class="alert-banner" id="alertBanner">
+      <div class="alert-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fca5a5" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </div>
+      <div class="alert-content">
+        <div class="alert-title"><span class="sev">CRITICAL</span> Fire Alarm Triggered — Room 812, Floor 8 East Wing</div>
+        <div class="alert-sub">Detected: 14:32:07 · 3 guests in vicinity · Security + Fire Response dispatched · ETA 4 min</div>
+      </div>
+      <div class="alert-actions">
+        <button class="alert-btn primary" onclick="openIncidentModal()">Manage Incident</button>
+        <button class="alert-btn ghost" onclick="document.getElementById('alertBanner').style.display='none'">Dismiss</button>
+      </div>
+    </div>
+
+    <!-- DASHBOARD GRID -->
+    <div class="dashboard">
+      <!-- METRIC CARDS -->
+      <div class="metric-card">
+        <div class="metric-icon red" style="float:right">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+        </div>
+        <div class="metric-label">Active Incidents</div>
+        <div class="metric-value" style="color:#dc2626">2</div>
+        <div class="metric-sub"><span class="metric-trend up">+1 since 14:00</span></div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-icon blue" style="float:right">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div class="metric-label">Responders On Duty</div>
+        <div class="metric-value" style="color:#1d4ed8">12</div>
+        <div class="metric-sub"><span class="metric-trend neutral">4 responding</span></div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-icon green" style="float:right">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="metric-label">Resolved Today</div>
+        <div class="metric-value" style="color:#059669">7</div>
+        <div class="metric-sub"><span class="metric-trend down">Avg 4.2 min response</span></div>
+      </div>
+
+      <!-- MAP -->
+      <div class="map-card">
+        <div class="card-header">
+          <div class="card-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/></svg>
+            Live Floor Map — Grand Meridian Hotel
+          </div>
+          <div class="card-actions">
+            <span class="chip active">Floor 8</span>
+            <span class="chip" onclick="switchFloor(this,'7')">Floor 7</span>
+            <span class="chip" onclick="switchFloor(this,'L')">Lobby</span>
+          </div>
+        </div>
+        <div class="hotel-map">
+          <div class="map-legend">
+            <div class="legend-item"><div class="legend-dot" style="background:#bae6fd"></div>Vacant</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#bbf7d0"></div>Occupied</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#fca5a5"></div>Alert</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#fde047"></div>Staff</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#e5e7eb"></div>Evacuated</div>
+          </div>
+          <div class="floor-label">Floor 8 — East Wing (Rooms 801–816)</div>
+          <div class="floor-grid" id="floorGrid"></div>
+          <div class="floor-label" style="margin-top:8px">Floor 8 — West Wing (Rooms 817–832)</div>
+          <div class="floor-grid" id="floorGrid2"></div>
+        </div>
+      </div>
+
+      <!-- LIVE FEED -->
+      <div class="feed-card">
+        <div class="card-header">
+          <div class="card-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            Live Event Feed
+          </div>
+          <span class="chip active" style="font-size:10px;padding:3px 8px">LIVE</span>
+        </div>
+        <div class="feed-list" id="feedList"></div>
+      </div>
+
+      <!-- INCIDENT PANEL -->
+      <div class="incident-panel">
+        <div class="incident-tabs">
+          <div class="itab active" onclick="switchTab(this,'team')">Response Team</div>
+          <div class="itab" onclick="switchTab(this,'comms')">Communications</div>
+          <div class="itab" onclick="switchTab(this,'protocol')">Protocol</div>
+          <div class="itab" onclick="switchTab(this,'timeline')">Timeline</div>
+          <div class="itab" onclick="switchTab(this,'analytics')">Analytics</div>
+        </div>
+
+        <!-- TEAM TAB -->
+        <div class="tab-content active" id="tab-team">
+          <div class="team-grid">
+            <div class="team-card"><div class="avatar security">RS</div><div class="team-info"><div class="team-name">Rajan Singh</div><div class="team-role">Head of Security</div><div class="team-status responding"><div class="status-dot-sm"></div>Responding — Floor 8</div></div></div>
+            <div class="team-card"><div class="avatar medical">PA</div><div class="team-info"><div class="team-name">Priya Anand</div><div class="team-role">First Aid Officer</div><div class="team-status responding"><div class="status-dot-sm"></div>En Route — ETA 2 min</div></div></div>
+            <div class="team-card"><div class="avatar fire">AK</div><div class="team-info"><div class="team-name">Arjun Kumar</div><div class="team-role">Fire Safety Lead</div><div class="team-status responding"><div class="status-dot-sm"></div>Standby — Fire Exit 8B</div></div></div>
+            <div class="team-card"><div class="avatar manager">SM</div><div class="team-info"><div class="team-name">Sunita Mehta</div><div class="team-role">Duty Manager</div><div class="team-status on-duty"><div class="status-dot-sm"></div>On Duty — Control Room</div></div></div>
+            <div class="team-card"><div class="avatar security">VN</div><div class="team-info"><div class="team-name">Vikram Nair</div><div class="team-role">Security Officer</div><div class="team-status on-duty"><div class="status-dot-sm"></div>On Duty — Floor 6</div></div></div>
+            <div class="team-card"><div class="avatar medical">KR</div><div class="team-info"><div class="team-name">Kavitha Rao</div><div class="team-role">EMT Technician</div><div class="team-status off-duty"><div class="status-dot-sm"></div>Off Duty</div></div></div>
+          </div>
+          <div style="margin-top:12px;display:flex;gap:8px;">
+            <button class="btn primary" onclick="showToast('Broadcast sent to all on-duty staff','All 8 on-duty personnel notified','success')">Broadcast Alert</button>
+            <button class="btn ghost" onclick="showToast('911 Gateway Active','Emergency services have been notified and are responding','info')">Notify 911</button>
+            <button class="btn ghost" onclick="showToast('Evacuation initiated','Floor 8 evacuation protocol activated via PA system','danger')">Initiate Evacuation</button>
+          </div>
+        </div>
+
+        <!-- COMMS TAB -->
+        <div class="tab-content" id="tab-comms">
+          <div class="comms-area">
+            <div class="channel-list">
+              <div class="channel active"><div class="ch-dot" style="background:#ef4444"></div><span class="ch-name">Incident #INC-0042</span><span class="ch-unread">3</span></div>
+              <div class="channel"><div class="ch-dot" style="background:#3b82f6"></div><span class="ch-name">Security Team</span></div>
+              <div class="channel"><div class="ch-dot" style="background:#10b981"></div><span class="ch-name">Medical Response</span><span class="ch-unread">1</span></div>
+              <div class="channel"><div class="ch-dot" style="background:#f59e0b"></div><span class="ch-name">Management</span></div>
+              <div class="channel"><div class="ch-dot" style="background:#8b5cf6"></div><span class="ch-name">911 Relay</span></div>
+              <div class="channel"><div class="ch-dot" style="background:#6b7280"></div><span class="ch-name">All Staff Broadcast</span></div>
+            </div>
+            <div class="message-area">
+              <div class="msg-list" id="msgList">
+                <div class="msg inbound"><div class="msg-bubble">Fire alarm triggered Room 812. Smoke detected. Guest called front desk — reporting smell of burning.</div><div class="msg-meta">Rajan Singh · 14:32</div></div>
+                <div class="msg outbound"><div class="msg-bubble">Copy. Dispatching fire safety team to Floor 8. Initiating precautionary evacuation protocol.</div><div class="msg-meta">You (Control) · 14:32</div></div>
+                <div class="msg inbound"><div class="msg-bubble">On site. False alarm — guest left iron on. No fire. Area safe, ventilating now.</div><div class="msg-meta">Arjun Kumar · 14:35</div></div>
+                <div class="msg outbound"><div class="msg-bubble">Acknowledged. Stand down evacuation. Log incident and complete safety check report.</div><div class="msg-meta">You (Control) · 14:36</div></div>
+              </div>
+              <div class="msg-input-row">
+                <input type="text" class="msg-input" id="msgInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendMessage()">
+                <button class="send-btn" onclick="sendMessage()">Send</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PROTOCOL TAB -->
+        <div class="tab-content" id="tab-protocol">
+          <div class="protocol-list">
+            <div class="proto-item"><div class="proto-num done">✓</div><div class="proto-body"><div class="proto-title">Incident Detected & Classified</div><div class="proto-desc">Fire alarm triggered, severity set to CRITICAL, auto-classification complete</div></div><span class="proto-status done">Done · 14:32</span></div>
+            <div class="proto-item"><div class="proto-num done">✓</div><div class="proto-body"><div class="proto-title">Response Team Notified</div><div class="proto-desc">Push alerts sent to Security, Fire Safety, and Medical personnel</div></div><span class="proto-status done">Done · 14:32</span></div>
+            <div class="proto-item"><div class="proto-num active-step">3</div><div class="proto-body"><div class="proto-title">On-Site Assessment</div><div class="proto-desc">Responding team confirms threat level and reports back to control</div></div><span class="proto-status active">In Progress</span></div>
+            <div class="proto-item"><div class="proto-num">4</div><div class="proto-body"><div class="proto-title">Guest Communication</div><div class="proto-desc">Notify affected guests via room phone, PA, and mobile app alert</div></div><span class="proto-status pending">Pending</span></div>
+            <div class="proto-item"><div class="proto-num">5</div><div class="proto-body"><div class="proto-title">External Services Liaison</div><div class="proto-desc">Coordinate with fire department and paramedics if required</div></div><span class="proto-status pending">Pending</span></div>
+            <div class="proto-item"><div class="proto-num">6</div><div class="proto-body"><div class="proto-title">Incident Closure & Debrief</div><div class="proto-desc">File incident report, update PMS, conduct post-incident review</div></div><span class="proto-status pending">Pending</span></div>
+          </div>
+        </div>
+
+        <!-- TIMELINE TAB -->
+        <div class="tab-content" id="tab-timeline">
+          <div class="timeline">
+            <div class="tl-item"><div class="tl-left"><div class="tl-dot" style="background:#ef4444"></div><div class="tl-line"></div></div><div class="tl-body"><div class="tl-title">Fire alarm triggered — Room 812</div><div class="tl-sub">Sensor detected smoke. System auto-classified as CRITICAL.</div><div class="tl-time">14:32:07</div></div></div>
+            <div class="tl-item"><div class="tl-left"><div class="tl-dot" style="background:#3b82f6"></div><div class="tl-line"></div></div><div class="tl-body"><div class="tl-title">Response team dispatched</div><div class="tl-sub">Rajan Singh, Arjun Kumar, and Priya Anand notified via app push.</div><div class="tl-time">14:32:09</div></div></div>
+            <div class="tl-item"><div class="tl-left"><div class="tl-dot" style="background:#f59e0b"></div><div class="tl-line"></div></div><div class="tl-body"><div class="tl-title">Guest contacted front desk</div><div class="tl-sub">Room 812 occupant called reporting burning smell. Calm, no injuries.</div><div class="tl-time">14:33:15</div></div></div>
+            <div class="tl-item"><div class="tl-left"><div class="tl-dot" style="background:#8b5cf6"></div><div class="tl-line"></div></div><div class="tl-body"><div class="tl-title">Precautionary evacuation initiated</div><div class="tl-sub">Floor 8 PA announcement, emergency lights activated.</div><div class="tl-time">14:34:00</div></div></div>
+            <div class="tl-item"><div class="tl-left"><div class="tl-dot" style="background:#10b981"></div></div><div class="tl-body"><div class="tl-title">On-site team confirmed false alarm</div><div class="tl-sub">Arjun Kumar reported unattended iron, no structural fire. Stand-down issued.</div><div class="tl-time">14:35:42</div></div></div>
+          </div>
+        </div>
+
+        <!-- ANALYTICS TAB -->
+        <div class="tab-content" id="tab-analytics">
+          <div class="stats-grid">
+            <div class="metric-card" style="box-shadow:none"><div class="metric-label">Response Time</div><div class="metric-value" style="color:#1d4ed8;font-size:22px">3.4 min</div><div class="metric-sub" style="font-size:11px">Avg this month</div></div>
+            <div class="metric-card" style="box-shadow:none"><div class="metric-label">Resolution Rate</div><div class="metric-value" style="color:#059669;font-size:22px">94%</div><div class="metric-sub" style="font-size:11px">Last 30 days</div></div>
+            <div class="metric-card" style="box-shadow:none"><div class="metric-label">Guest Safety Score</div><div class="metric-value" style="color:#7c3aed;font-size:22px">98.2</div><div class="metric-sub" style="font-size:11px">Out of 100</div></div>
+          </div>
+          <div class="bar-container" style="margin-top:4px">
+            <div style="font-size:12px;font-weight:600;color:var(--gray-700);margin-bottom:8px">Incident Types — Last 30 Days</div>
+            <div class="bar-row"><span class="bar-label">Fire Alarm</span><div class="bar-track"><div class="bar-fill" style="width:70%;background:#ef4444"></div></div><span class="bar-val">14</span></div>
+            <div class="bar-row"><span class="bar-label">Medical</span><div class="bar-track"><div class="bar-fill" style="width:40%;background:#3b82f6"></div></div><span class="bar-val">8</span></div>
+            <div class="bar-row"><span class="bar-label">Security</span><div class="bar-track"><div class="bar-fill" style="width:25%;background:#f59e0b"></div></div><span class="bar-val">5</span></div>
+            <div class="bar-row"><span class="bar-label">Maintenance</span><div class="bar-track"><div class="bar-fill" style="width:15%;background:#8b5cf6"></div></div><span class="bar-val">3</span></div>
+            <div class="bar-row"><span class="bar-label">Guest Assist</span><div class="bar-track"><div class="bar-fill" style="width:10%;background:#10b981"></div></div><span class="bar-val">2</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SOS BUTTON -->
+<div class="sos-float">
+  <button class="sos-btn" onclick="openReportModal()">
+    <span>SOS</span>
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+  </button>
+</div>
+
+<!-- REPORT INCIDENT MODAL -->
+<div class="modal-overlay" id="reportModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Report New Incident
+      </div>
+      <button class="modal-close" onclick="closeModal('reportModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Incident Type</label>
+        <div class="type-grid">
+          <div class="type-card selected danger" onclick="selectType(this)"><div class="type-icon">🔥</div><div class="type-name">Fire / Smoke</div></div>
+          <div class="type-card" onclick="selectType(this)"><div class="type-icon">🏥</div><div class="type-name">Medical</div></div>
+          <div class="type-card" onclick="selectType(this)"><div class="type-icon">🔒</div><div class="type-name">Security</div></div>
+          <div class="type-card" onclick="selectType(this)"><div class="type-icon">💧</div><div class="type-name">Flood / Leak</div></div>
+          <div class="type-card" onclick="selectType(this)"><div class="type-icon">⚡</div><div class="type-name">Power Outage</div></div>
+          <div class="type-card" onclick="selectType(this)"><div class="type-icon">🆘</div><div class="type-name">Other</div></div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Severity Level</label>
+        <div class="severity-row">
+          <button class="sev-btn low" onclick="selectSev(this)">Low</button>
+          <button class="sev-btn medium" onclick="selectSev(this)">Medium</button>
+          <button class="sev-btn high sel" onclick="selectSev(this)">High</button>
+          <button class="sev-btn critical" onclick="selectSev(this)">Critical</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Location</label>
+        <select class="form-control">
+          <option>Floor 8 — Room 812</option>
+          <option>Floor 8 — East Wing Corridor</option>
+          <option>Lobby — Main Entrance</option>
+          <option>Restaurant — Level 2</option>
+          <option>Pool & Spa Area</option>
+          <option>Parking — Basement Level</option>
+          <option>Conference Center</option>
+          <option>Other / Specify Below</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea class="form-control" rows="3" placeholder="Describe the situation, number of people involved, immediate risks..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Reported By</label>
+        <input type="text" class="form-control" placeholder="Staff name / Guest room number" value="Sunita Mehta (Duty Manager)">
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:#fffbeb;border-radius:8px;border:1px solid #fde68a">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+        <span style="font-size:12px;color:#92400e">High/Critical incidents auto-notify 911 gateway and all on-duty responders.</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn ghost" onclick="closeModal('reportModal')">Cancel</button>
+      <button class="btn danger" onclick="submitIncident()">Dispatch Response</button>
+    </div>
+  </div>
+</div>
+
+<!-- INCIDENT MANAGE MODAL -->
+<div class="modal-overlay" id="incidentModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Incident #INC-0042 — Active Management
+      </div>
+      <button class="modal-close" onclick="closeModal('incidentModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+        <div style="padding:10px;background:#fff5f5;border-radius:8px;border:1px solid #fecaca"><div style="font-size:11px;color:#9ca3af;margin-bottom:2px">Status</div><div style="font-size:13px;font-weight:700;color:#dc2626">ACTIVE — On-site Assessment</div></div>
+        <div style="padding:10px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200)"><div style="font-size:11px;color:#9ca3af;margin-bottom:2px">Time Elapsed</div><div style="font-size:13px;font-weight:700;color:var(--gray-800)" id="elapsed">00:04:17</div></div>
+        <div style="padding:10px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200)"><div style="font-size:11px;color:#9ca3af;margin-bottom:2px">Responders</div><div style="font-size:13px;font-weight:700;color:var(--gray-800)">3 Dispatched</div></div>
+        <div style="padding:10px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200)"><div style="font-size:11px;color:#9ca3af;margin-bottom:2px">Guests Affected</div><div style="font-size:13px;font-weight:700;color:var(--gray-800)">~12 (Floor 8)</div></div>
+      </div>
+      <div style="font-size:12px;font-weight:600;color:var(--gray-700);margin-bottom:8px">Quick Actions</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <button class="btn ghost" style="font-size:11px;padding:10px 8px" onclick="closeModal('incidentModal');showToast('PA Announcement Sent','All guests on Floor 8 have been notified via room audio system','info')">📢 PA Broadcast</button>
+        <button class="btn ghost" style="font-size:11px;padding:10px 8px" onclick="closeModal('incidentModal');showToast('Guest SMS Sent','Mobile alerts dispatched to all registered guests in affected zone','success')">📱 SMS Guests</button>
+        <button class="btn ghost" style="font-size:11px;padding:10px 8px" onclick="closeModal('incidentModal');showToast('Evacuation Routes Active','Digital signage updated. Exit routes illuminated on all floors.','warning')">🚪 Evacuation</button>
+        <button class="btn ghost" style="font-size:11px;padding:10px 8px" onclick="closeModal('incidentModal');showToast('Fire Dept Contacted','Bangalore Fire Station #4 en route. ETA 8 minutes.','danger')">🚒 Fire Dept</button>
+        <button class="btn ghost" style="font-size:11px;padding:10px 8px" onclick="closeModal('incidentModal');showToast('Ambulance Dispatched','KSRTC Medical Unit alerted. Standby mode activated.','info')">🚑 Ambulance</button>
+        <button class="btn ghost" style="font-size:11px;padding:10px 8px" onclick="closeModal('incidentModal');showToast('Police Alerted','Local PCR unit notified via 911 gateway relay.','info')">🚔 Police</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn ghost" onclick="closeModal('incidentModal')">Close</button>
+      <button class="btn primary" onclick="closeModal('incidentModal');resolveIncident()">Mark Resolved</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// TIME
+function updateTime(){
+  const now=new Date();
+  document.getElementById('liveTime').textContent=now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+setInterval(updateTime,1000);
+updateTime();
+
+// ELAPSED TIMER
+let elapsedSec=257;
+function updateElapsed(){
+  elapsedSec++;
+  const m=String(Math.floor(elapsedSec/60)).padStart(2,'0');
+  const s=String(elapsedSec%60).padStart(2,'0');
+  const el=document.getElementById('elapsed');
+  if(el)el.textContent='00:'+m+':'+s;
+}
+setInterval(updateElapsed,1000);
+
+// FLOOR MAP
+const eastRooms=[801,802,803,804,805,806,807,808,809,810,811,812,813,814,815,816];
+const westRooms=[817,818,819,820,821,822,823,824,825,826,827,828,829,830,831,832];
+function buildFloor(containerId,rooms){
+  const g=document.getElementById(containerId);
+  rooms.forEach(r=>{
+    const d=document.createElement('div');
+    d.className='room';
+    d.textContent=r;
+    if(r===812){d.className+=' alert';d.title='ALERT — Fire alarm';}
+    else if([808,809,815].includes(r)){d.className+=' evacuated';d.title='Evacuated';}
+    else if([804,811,816].includes(r)){d.className+=' staff';d.title='Staff present';}
+    else if([801,802,803,805,807,810,813,814].includes(r)){d.className+=' occupied';d.title='Occupied';}
+    else{d.className+=' clear';d.title='Vacant';}
+    d.onclick=()=>{if(r===812)openIncidentModal();else showToast('Room '+r,'Status: '+d.title,'info');}
+    g.appendChild(d);
+  });
+}
+buildFloor('floorGrid',eastRooms);
+buildFloor('floorGrid2',westRooms);
+
+// FEED
+const feedData=[
+  {type:'critical',time:'14:32',msg:'Fire alarm triggered — Sensor ID FS-812 activated. Room 812, Floor 8.',tags:[{t:'CRITICAL',c:'red'},{t:'FIRE',c:'red'}]},
+  {type:'critical',time:'14:32',msg:'Auto-dispatch: Security + Fire Safety team notified via push alert.',tags:[{t:'AUTO',c:'blue'}]},
+  {type:'warning',time:'14:33',msg:'Guest (Room 812) reports burning smell from corridor. No visible flames.',tags:[{t:'GUEST REPORT',c:'amber'}]},
+  {type:'info',time:'14:34',msg:'Precautionary PA announcement issued — Floor 8. Guests advised to proceed to assembly point.',tags:[{t:'BROADCAST',c:'blue'}]},
+  {type:'info',time:'14:35',msg:'Fire Safety Lead on-site — confirming false alarm. Unattended iron, no fire.',tags:[{t:'ON-SITE',c:'blue'}]},
+  {type:'resolved',time:'14:36',msg:'Stand-down issued. Evacuation cancelled. Ventilation in progress.',tags:[{t:'RESOLVED',c:'green'}]},
+];
+function buildFeed(){
+  const fl=document.getElementById('feedList');
+  feedData.forEach(f=>{
+    const d=document.createElement('div');
+    d.className='feed-item '+f.type;
+    d.innerHTML=`<div class="feed-time">${f.time}</div><div class="feed-msg">${f.msg}</div><div class="feed-meta">${f.tags.map(t=>`<span class="feed-tag ${t.c}">${t.t}</span>`).join('')}</div>`;
+    fl.appendChild(d);
+  });
+}
+buildFeed();
+
+// AUTO FEED UPDATE
+const liveEvents=[
+  {type:'info',time:'',msg:'Smoke detector FS-812 returned to standby. Area clear.',tags:[{t:'SENSOR',c:'blue'}]},
+  {type:'warning',time:'',msg:'Lobby CCTV: Minor congestion from returning guests after Floor 8 evacuation.',tags:[{t:'WATCH',c:'amber'}]},
+  {type:'info',time:'',msg:'Incident Report INC-0042 auto-drafted. Pending duty manager signature.',tags:[{t:'SYSTEM',c:'blue'}]},
+];
+let liveIdx=0;
+setInterval(()=>{
+  if(liveIdx<liveEvents.length){
+    const f=liveEvents[liveIdx++];
+    const now=new Date();
+    f.time=now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+    const fl=document.getElementById('feedList');
+    const d=document.createElement('div');
+    d.className='feed-item '+f.type;
+    d.style.animation='toastIn 0.4s ease';
+    d.innerHTML=`<div class="feed-time">${f.time}</div><div class="feed-msg">${f.msg}</div><div class="feed-meta">${f.tags.map(t=>`<span class="feed-tag ${t.c}">${t.t}</span>`).join('')}</div>`;
+    fl.prepend(d);
+  }
+},12000);
+
+// TABS
+function switchTab(el,id){
+  document.querySelectorAll('.itab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-'+id).classList.add('active');
+}
+
+// NAV
+function setNav(el,id){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// FLOOR SWITCHER
+function switchFloor(el,f){
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  showToast('Floor '+f+' Map','Switching to floor '+f+' view — data loaded','info');
+}
+
+// MODAL
+function openReportModal(){document.getElementById('reportModal').classList.add('open');}
+function openIncidentModal(){document.getElementById('incidentModal').classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+// CLICK OUTSIDE TO CLOSE
+document.querySelectorAll('.modal-overlay').forEach(m=>{
+  m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');});
+});
+
+// SELECT TYPE
+function selectType(el){
+  document.querySelectorAll('.type-card').forEach(c=>{c.classList.remove('selected','danger');});
+  el.classList.add('selected');
+  if(['🔥','🔒'].includes(el.querySelector('.type-icon').textContent))el.classList.add('danger');
+}
+
+// SELECT SEV
+function selectSev(el){
+  document.querySelectorAll('.sev-btn').forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+// SUBMIT INCIDENT
+function submitIncident(){
+  closeModal('reportModal');
+  showToast('Incident Reported','Response team dispatched. All channels notified.','danger');
+  setTimeout(()=>showToast('911 Gateway','Emergency services alerted automatically.','info'),1500);
+}
+
+// RESOLVE
+function resolveIncident(){
+  document.getElementById('alertBanner').style.display='none';
+  document.getElementById('globalStatus').className='status-pill normal';
+  document.getElementById('statusText').textContent='All Clear — No Active Incidents';
+  document.querySelector('#globalStatus .status-dot').classList.remove('blink');
+  showToast('Incident Resolved','INC-0042 closed. Report filed. Post-incident debrief scheduled.','success');
+}
+
+// MESSAGING
+function sendMessage(){
+  const inp=document.getElementById('msgInput');
+  const txt=inp.value.trim();
+  if(!txt)return;
+  const list=document.getElementById('msgList');
+  const d=document.createElement('div');
+  d.className='msg outbound';
+  d.innerHTML=`<div class="msg-bubble">${txt}</div><div class="msg-meta">You (Control) · ${new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</div>`;
+  list.appendChild(d);
+  list.scrollTop=list.scrollHeight;
+  inp.value='';
+  setTimeout(()=>{
+    const r=document.createElement('div');
+    r.className='msg inbound';
+    r.innerHTML=`<div class="msg-bubble">Acknowledged. Will update once assessment is complete.</div><div class="msg-meta">Rajan Singh · ${new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</div>`;
+    list.appendChild(r);
+    list.scrollTop=list.scrollHeight;
+  },2000);
+}
+
+// TOAST
+function showToast(title,msg,type){
+  const area=document.getElementById('toastArea');
+  const t=document.createElement('div');
+  t.className='toast '+type;
+  t.innerHTML=`<div><div class="toast-title">${title}</div><div class="toast-msg">${msg}</div></div>`;
+  area.appendChild(t);
+  setTimeout(()=>t.remove(),4000);
+}
+
+// INITIAL TOAST
+setTimeout(()=>showToast('System Connected','All sensors, gateways and PMS bridge are live.','success'),1000);
+setTimeout(()=>showToast('Active Incident Detected','INC-0042: Fire alarm — Room 812, Floor 8. Respond now.','danger'),2500);
+</script>
+</body>
+</html>
