@@ -1,0 +1,8 @@
+node_modules/
+npm-debug.log
+yarn-error.log
+.firebase/
+
+# environmental variables
+.env
+.env.*
