@@ -16,8 +16,8 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Ensure .env is present and variables are exported for the build
-RUN if [ -f .env ]; then export $(cat .env | xargs); fi && npm run build
+# Next.js will automatically pick up the .env file if it exists in the root
+RUN npm run build
 
 # Production image, copy all the files and run next
 FROM base AS runner
