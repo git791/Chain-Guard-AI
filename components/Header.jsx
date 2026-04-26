@@ -1,4 +1,9 @@
+import { useState } from 'react';
+import CreateShipmentModal from './CreateShipmentModal';
+
 export default function Header({ onRefresh, onNewAlert }) {
+  const [showModal, setShowModal] = useState(false);
+
   return (
     <header className="px-8 py-5 border-b border-border flex items-center justify-between bg-bg sticky top-0 z-10 max-md:p-4">
       <div>
@@ -13,10 +18,17 @@ export default function Header({ onRefresh, onNewAlert }) {
         <button onClick={onRefresh} className="px-4 py-2 rounded text-[13px] font-medium transition-colors bg-surface2 text-text border border-border hover:border-white/15">
           ↻ Refresh
         </button>
-        <button onClick={onNewAlert} className="px-4 py-2 rounded text-[13px] font-medium transition-colors bg-accent text-white hover:bg-blue-600 border border-transparent">
-          + New Alert
+        <button onClick={() => setShowModal(true)} className="px-4 py-2 rounded text-[13px] font-medium transition-colors bg-accent text-white hover:bg-blue-600 border border-transparent">
+          + New Shipment
         </button>
+        {onNewAlert && (
+           <button onClick={onNewAlert} className="px-4 py-2 rounded text-[13px] font-medium transition-colors border border-red text-red hover:bg-red/10 border-transparent">
+             Danger Alert
+           </button>
+        )}
       </div>
+
+      {showModal && <CreateShipmentModal onClose={() => setShowModal(false)} />}
     </header>
   );
 }

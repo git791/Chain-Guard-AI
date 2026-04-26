@@ -20,7 +20,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${dmSans.variable} ${dmMono.variable} h-full antialiased`}>
+    <html lang="en" data-scroll-behavior="smooth" className={`${dmSans.variable} ${dmMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans bg-bg text-text selection:bg-accent/30">
         <Providers>{children}</Providers>
       </body>
